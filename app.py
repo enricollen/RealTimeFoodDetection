@@ -5,7 +5,7 @@ from ultralytics import YOLO
 
 app = Flask(__name__)
 socketio = SocketIO(app)
-model = YOLO("yolov8s.pt") 
+model = YOLO("yolov8x.pt") 
 
 def generate_frames():
     camera = cv2.VideoCapture(0)  # index of primary camera
