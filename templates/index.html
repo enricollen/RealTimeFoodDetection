@@ -29,9 +29,10 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="mb-4">Webcam Streaming</h1>
+        <h1 class="mb-4">Realtime Food Recognition</h1>
         <button id="toggle-stream" class="btn btn-primary btn-custom">Start Stream</button>
         <button id="toggle-menu" class="btn btn-secondary btn-custom">Show Menu</button>
+        <button id="confirm" class="btn btn-success btn-custom">Confirm</button>
         <div>
             <img id="video-feed" src="" style="display: none;">
         </div>
@@ -41,14 +42,42 @@
         <div class="menu-section">
             <h2 id="menu-title" style="display: none;">Menu</h2>
             <ul id="menu" class="list-group" style="display: none;">
-                <!-- items -->
+                <!-- Menu items -->
             </ul>
+        </div>
+
+        <!-- Bills -->
+        <div id="bills" class="mt-5">
+            <h2>Bills</h2>
+            <!-- Bills list -->
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="errorModalLabel">Error</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    No food was detected. Please try again.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
         var socket = io.connect('http://' + document.domain + ':' + location.port);
         var isStreaming = false;
+        var billNumber = 1;
+        var detectedItems = {};
 
         document.getElementById("toggle-stream").addEventListener("click", function() {
             if (isStreaming) {
@@ -62,8 +91,13 @@
             toggleMenu();
         });
 
+        document.getElementById("confirm").addEventListener("click", function() {
+            confirmBill();
+        });
+
         socket.on('update_price', function(data) {
             document.getElementById("price").innerText = data.price;
+            detectedItems = data.items;  // Update detected items
         });
 
         function startStream() {
@@ -96,7 +130,7 @@
 
         function displayMenu() {
             var menuList = document.getElementById("menu");
-            menuList.innerHTML = ''; // Clear previous menu items
+            menuList.innerHTML = ''; 
             for (var item in menuItems) {
                 var listItem = document.createElement("li");
                 listItem.className = "list-group-item";
@@ -118,6 +152,30 @@
                 menuList.style.display = "none";
                 document.getElementById("toggle-menu").innerText = "Show Menu";
             }
+        }
+
+        function confirmBill() {
+            if (Object.keys(detectedItems).length === 0) {
+                $('#errorModal').modal('show');
+                return;
+            }
+
+            var price = document.getElementById("price").innerText;
+            var billContent = document.createElement("div");
+            billContent.className = "card mt-3";
+            var itemsList = "";
+            for (var item in detectedItems) {
+                itemsList += `${item}: $${menuItems[item]} x ${detectedItems[item]}<br>`;
+            }
+            billContent.innerHTML = `
+                <div class="card-body">
+                    <h5 class="card-title">Bill #${billNumber}</h5>
+                    <p class="card-text">${itemsList}</p>
+                    <p class="card-text">Total Price: $${price}</p>
+                </div>
+            `;
+            document.getElementById("bills").appendChild(billContent);
+            billNumber++;
         }
     </script>
 

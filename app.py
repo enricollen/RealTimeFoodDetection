@@ -29,6 +29,7 @@ def generate_frames():
             break
         else:
             total_price = 0
+            detected_items = {}
             results = model(frame, conf=0.5, stream=True)
 
             for result in results:
@@ -41,7 +42,14 @@ def generate_frames():
                         confidence = float(box.conf[0])  # confidence score
 
                         # Compute the price based on specific detected class
-                        total_price += menu.get(class_name, 0)
+                        price = menu.get(class_name, 0)
+                        total_price += price
+
+                        # also collect the class name of detected food to send to frontend
+                        if class_name in detected_items:
+                            detected_items[class_name] += 1
+                        else:
+                            detected_items[class_name] = 1
 
                         # draw the bounding box
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
@@ -50,8 +58,8 @@ def generate_frames():
                         label = f"{class_name} ({confidence:.2f})"
                         cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
-            # notify the total price to the front end
-            socketio.emit('update_price', {'price': total_price})
+            # notify the total price and detected items to the front end
+            socketio.emit('update_price', {'price': total_price, 'items': detected_items})
 
             # encode the frame
             ret, buffer = cv2.imencode('.jpg', frame)
