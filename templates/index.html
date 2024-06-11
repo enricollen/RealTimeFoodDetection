@@ -4,15 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Webcam Streaming</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        body {
+            padding-top: 50px;
+        }
+        #video-feed {
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+            display: block;
+        }
+        .container {
+            text-align: center;
+        }
+        .menu-section {
+            margin-top: 20px;
+        }
+        .btn-custom {
+            margin: 5px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Webcam Streaming</h1>
-    <button id="toggle-stream">Start Stream</button>
-    <div>
-        <img id="video-feed" src="" style="display: none;">
+    <div class="container">
+        <h1 class="mb-4">Webcam Streaming</h1>
+        <button id="toggle-stream" class="btn btn-primary btn-custom">Start Stream</button>
+        <button id="toggle-menu" class="btn btn-secondary btn-custom">Show Menu</button>
+        <div>
+            <img id="video-feed" src="" style="display: none;">
+        </div>
+        <h2 class="mt-4">Total Price: $<span id="price">0</span></h2>
+
+        <!-- Menu -->
+        <div class="menu-section">
+            <h2 id="menu-title" style="display: none;">Menu</h2>
+            <ul id="menu" class="list-group" style="display: none;">
+                <!-- items -->
+            </ul>
+        </div>
     </div>
-    <h2>Total Price: $<span id="price">0</span></h2>
+
     <script>
         var socket = io.connect('http://' + document.domain + ':' + location.port);
         var isStreaming = false;
@@ -23,6 +56,10 @@
             } else {
                 startStream();
             }
+        });
+
+        document.getElementById("toggle-menu").addEventListener("click", function() {
+            toggleMenu();
         });
 
         socket.on('update_price', function(data) {
@@ -42,6 +79,50 @@
             document.getElementById("toggle-stream").innerText = "Start Stream";
             isStreaming = false;
         }
+
+        // Menu items and prices
+        var menuItems = {
+            'banana': 5,
+            'black beans': 4,
+            'grilled chicken breast': 7,
+            'milk': 2,
+            'orange juice': 3,
+            'pizza': 8,
+            'potato': 3,
+            'salad': 5,
+            'spaghetti': 10,
+            'white rice': 5
+        };
+
+        function displayMenu() {
+            var menuList = document.getElementById("menu");
+            menuList.innerHTML = ''; // Clear previous menu items
+            for (var item in menuItems) {
+                var listItem = document.createElement("li");
+                listItem.className = "list-group-item";
+                listItem.innerText = item + ": $" + menuItems[item];
+                menuList.appendChild(listItem);
+            }
+        }
+
+        function toggleMenu() {
+            var menuTitle = document.getElementById("menu-title");
+            var menuList = document.getElementById("menu");
+            if (menuList.style.display === "none") {
+                displayMenu();
+                menuTitle.style.display = "block";
+                menuList.style.display = "block";
+                document.getElementById("toggle-menu").innerText = "Hide Menu";
+            } else {
+                menuTitle.style.display = "none";
+                menuList.style.display = "none";
+                document.getElementById("toggle-menu").innerText = "Show Menu";
+            }
+        }
     </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
