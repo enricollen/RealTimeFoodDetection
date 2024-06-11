@@ -12,6 +12,7 @@
     <div>
         <img id="video-feed" src="" style="display: none;">
     </div>
+    <h2>Total Price: $<span id="price">0</span></h2>
     <script>
         var socket = io.connect('http://' + document.domain + ':' + location.port);
         var isStreaming = false;
@@ -22,6 +23,10 @@
             } else {
                 startStream();
             }
+        });
+
+        socket.on('update_price', function(data) {
+            document.getElementById("price").innerText = data.price;
         });
 
         function startStream() {

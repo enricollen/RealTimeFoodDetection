@@ -1,20 +1,34 @@
 from flask import Flask, render_template, Response
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, emit
 import cv2
 from ultralytics import YOLO
 
 app = Flask(__name__)
 socketio = SocketIO(app)
-model = YOLO("yolov8x.pt") 
+model = YOLO("food_detector.pt") 
+
+menu = {
+    'banana': 5,
+    'black beans': 4,
+    'grilled chicken breast': 7,
+    'milk': 2,
+    'orange juice': 3,
+    'pizza': 8,
+    'potato': 3,
+    'salad': 5,
+    'spaghetti': 10,
+    'white rice': 5
+}
 
 def generate_frames():
-    camera = cv2.VideoCapture(0)  # index of primary camera
+    camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
     while True:
         success, frame = camera.read()
         if not success:
             break
         else:
+            total_price = 0
             results = model(frame, conf=0.5, stream=True)
 
             for result in results:
@@ -26,12 +40,18 @@ def generate_frames():
                         class_name = result.names[class_idx]  # class name from index
                         confidence = float(box.conf[0])  # confidence score
 
+                        # Compute the price based on specific detected class
+                        total_price += menu.get(class_name, 0)
+
                         # draw the bounding box
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
 
                         # draw the label text
                         label = f"{class_name} ({confidence:.2f})"
                         cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+
+            # notify the total price to the front end
+            socketio.emit('update_price', {'price': total_price})
 
             # encode the frame
             ret, buffer = cv2.imencode('.jpg', frame)
