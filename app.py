@@ -5,7 +5,7 @@ from ultralytics import YOLO
 
 app = Flask(__name__)
 socketio = SocketIO(app)
-model = YOLO("food_detector.pt") 
+model = YOLO("model/food_detector.pt") 
 
 menu = {
     'banana': 5,
